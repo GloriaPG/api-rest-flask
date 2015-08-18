@@ -19,8 +19,8 @@ auth = HTTPBasicAuth()
 @app.before_request
 def db_connect():
   g.conn = MySQLdb.connect(host='localhost',
-                              user='test',
-                              passwd='password',
+                              user='root',
+                              passwd='root',
                               db='test')
   g.cursor = g.conn.cursor()
 
