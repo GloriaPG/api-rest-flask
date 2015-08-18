@@ -47,20 +47,6 @@ def get_password(username):
 def unauthorized():
     return make_response(jsonify({'message': 'Unauthorized access'}), 403)
 
-tasks = [
-    {
-        'id': 1,
-        'title': u'Buy groceries',
-        'description': u'Milk, Cheese, Pizza, Fruit, Tylenol',
-        'done': False
-    },
-    {
-        'id': 2,
-        'title': u'Learn Python',
-        'description': u'Need to find a good Python tutorial on the web',
-        'done': False
-    }
-]
 
 task_fields = {
     'title': fields.String,
@@ -83,7 +69,10 @@ class TaskListAPI(Resource):
         super(TaskListAPI, self).__init__()
 
     def get(self):
-        return {'tasks': [marshal(task, task_fields) for task in tasks]}
+         result = query_db("SELECT * FROM test")
+         data = json.dumps(result)
+         resp = Response(data, status=200, mimetype='application/json')
+         return resp
 
     def post(self):
         args = self.reqparse.parse_args()
