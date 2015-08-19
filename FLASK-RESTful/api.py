@@ -69,22 +69,17 @@ class TaskListAPI(Resource):
         super(TaskListAPI, self).__init__()
 
     def get(self):
-         result = query_db("SELECT * FROM test")
+         result = query_db("SELECT * FROM test.test")
          data = json.dumps(result)
          resp = Response(data, status=200, mimetype='application/json')
          return resp
 
     def post(self):
-        args = self.reqparse.parse_args()
-        task = {
-            'id': tasks[-1]['id'] + 1,
-            'title': args['title'],
-            'description': args['description'],
-            'done': False
-        }
-        tasks.append(task)
-        return {'task': marshal(task, task_fields)}, 201
-
+        req_json = request.get_json()
+        g.cursor.execute("INSERT INTO test.test (title,description,done) VALUES (%s,%s,%s)", (req_json['title'], req_json['description'],req_json['done']))
+        g.conn.commit()
+        resp = Response("Updated", status=201, mimetype='application/json')
+        return resp
 
 class TaskAPI(Resource):
     decorators = [auth.login_required]
@@ -97,29 +92,18 @@ class TaskAPI(Resource):
         super(TaskAPI, self).__init__()
 
     def get(self, id):
-        task = [task for task in tasks if task['id'] == id]
-        if len(task) == 0:
-            abort(404)
-        return {'task': marshal(task[0], task_fields)}
-
-    def put(self, id):
-        task = [task for task in tasks if task['id'] == id]
-        if len(task) == 0:
-            abort(404)
-        task = task[0]
-        args = self.reqparse.parse_args()
-        for k, v in args.items():
-            if v is not None:
-                task[k] = v
-        return {'task': marshal(task, task_fields)}
+        req_json = request.get_json()
+        result=query_db("SELECT * FROM test.test WHERE id=%s ", (req_json['id']))
+        data=json.dumps(result)
+        resp = Response(data, status=200, mimetype='application/json')
+        return resp
 
     def delete(self, id):
-        task = [task for task in tasks if task['id'] == id]
-        if len(task) == 0:
-            abort(404)
-        tasks.remove(task[0])
-        return {'result': True}
-
+        req_json = request.get_json()
+        g.cursor.execute("DELETE test.test WHERE id=%s", (req_json['id']))
+        g.conn.commit()
+        resp = Response("Updated", status=201, mimetype='application/json')
+        return resp
 
 api.add_resource(TaskListAPI, '/todo/api/v1.0/tasks', endpoint='tasks')
 api.add_resource(TaskAPI, '/todo/api/v1.0/tasks/<int:id>', endpoint='task')
